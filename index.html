@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>For You, Bby.</title>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        overflow: hidden;
+        font-family: "DM Sans", sans-serif;
+        color: #3a292b;
+        background:
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(255, 255, 255, 0.92) 0%,
+            rgba(255, 255, 255, 0.55) 25%,
+            transparent 60%
+          ),
+          radial-gradient(
+            circle at 15% 90%,
+            rgba(178, 139, 91, 0.1),
+            transparent 30%
+          ),
+          radial-gradient(
+            circle at 90% 10%,
+            rgba(104, 31, 45, 0.045),
+            transparent 32%
+          ),
+          linear-gradient(135deg, #eee6dc 0%, #f8f3ec 50%, #ebe1d6 100%);
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.7'/%3E%3C/svg%3E");
+      }
+
+      .ambient {
+        position: fixed;
+        width: 650px;
+        height: 650px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.72),
+          rgba(255, 255, 255, 0) 68%
+        );
+        filter: blur(8px);
+        pointer-events: none;
+      }
+
+      .scene {
+        position: relative;
+        width: 100%;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      /* INTRO DI ATAS */
+      .intro {
+        position: absolute;
+        top: 12vh;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        z-index: 10;
+        width: 100%;
+        padding: 0 20px;
+        pointer-events: none;
+      }
+
+      .intro-small {
+        display: block;
+        color: #b18b5b;
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .intro-title {
+        color: #5d1f2b;
+        font-family: "Playfair Display", serif;
+        font-size: clamp(24px, 4vw, 36px);
+        font-weight: 500;
+      }
+
+      .envelope-stage {
+        position: relative;
+        width: min(400px, 84vw);
+        aspect-ratio: 1.55 / 1;
+        perspective: 1800px;
+        z-index: 10;
+      }
+
+      .envelope-shadow {
+        position: absolute;
+        width: 76%;
+        height: 9%;
+        left: 12%;
+        bottom: -8%;
+        border-radius: 50%;
+        background: rgba(65, 40, 42, 0.2);
+        filter: blur(22px);
+        z-index: 0;
+      }
+
+      .envelope {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        z-index: 5;
+        overflow: visible;
+      }
+
+      .envelope-back {
+        position: absolute;
+        inset: 0;
+        border-radius: 5px;
+        background: linear-gradient(145deg, #f8efe4 0%, #f3e6d6 100%);
+        box-shadow:
+          0 30px 65px rgba(70, 42, 44, 0.17),
+          0 4px 12px rgba(70, 42, 44, 0.07);
+        z-index: 1;
+      }
+
+      /* KERTAS SURAT */
+      .letter {
+        position: absolute;
+        width: 90%;
+        height: 90%;
+        left: 5%;
+        top: 5%;
+        background: linear-gradient(135deg, #fffdf8, #f8f0e5);
+        border: 1px solid rgba(170, 130, 85, 0.25);
+        box-shadow:
+          0 5px 15px rgba(65, 40, 40, 0.08),
+          0 18px 35px rgba(65, 40, 40, 0.08);
+
+        z-index: 5;
+        overflow: hidden;
+        border-radius: 3px;
+        transform-origin: 50% 100%;
+        will-change: transform;
+      }
+
+      /* LIPATAN AMPLOP */
+      .envelope-left {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #e7d7c5, #eadbca);
+        clip-path: polygon(0 0, 50% 50%, 0 100%);
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .envelope-right {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(225deg, #e5d5c3, #eadbca);
+        clip-path: polygon(100% 0, 50% 50%, 100% 100%);
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .envelope-bottom {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, #f5e9da, #eee0cf);
+        clip-path: polygon(0 100%, 50% 48%, 100% 100%);
+        z-index: 11;
+        pointer-events: none;
+        filter: drop-shadow(0 -2px 3px rgba(70, 40, 40, 0.08));
+      }
+
+      /* FLAP ATAS (DEPAN DAN BELAKANG) */
+      .flap {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(145deg, #e7d6c3, #dfccb7);
+        clip-path: polygon(0 0, 100% 0, 50% 52%);
+        transform-origin: 50% 0%;
+        transform-style: preserve-3d;
+        z-index: 15;
+        pointer-events: none;
+        backface-visibility: hidden;
+      }
+
+      .flap-back {
+        position: absolute;
+        inset: 0;
+        background: #d8c3ae;
+        clip-path: polygon(0 0, 100% 0, 50% 52%);
+        transform-origin: 50% 0%;
+        transform: rotateX(180deg);
+        transform-style: preserve-3d;
+        z-index: 14;
+        pointer-events: none;
+        backface-visibility: hidden;
+      }
+
+      /* WAX SEAL WITH HEART ICON */
+      .seal {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 58px;
+        height: 58px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 32% 28%,
+          #8e3e4d 0%,
+          #641f2d 58%,
+          #46131d 100%
+        );
+        border: 1px solid rgba(218, 176, 112, 0.55);
+        box-shadow:
+          0 8px 22px rgba(65, 20, 30, 0.27),
+          inset 0 1px 3px rgba(255, 255, 255, 0.17);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+      }
+
+      .seal::before {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border: 1px solid rgba(220, 178, 113, 0.43);
+        border-radius: 50%;
+      }
+
+      .seal::after {
+        content: "";
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #e0b875;
+        opacity: 0.6;
+      }
+
+      .seal-icon {
+        width: 22px;
+        height: 22px;
+        fill: #dcb176;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+        z-index: 2;
+      }
+
+      /* ISI SURAT PRATINJAU */
+      .letter-content {
+        position: relative;
+        height: 100%;
+        padding: 30px 25px;
+        display: flex;
+        flex-direction: column;
+        z-index: 2;
+      }
+
+      .letter-label {
+        text-align: center;
+        color: #b18b5b;
+        font-size: 8px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+
+      .letter-title {
+        margin-top: 6px;
+        text-align: center;
+        color: #5d1f2b;
+        font-family: "Playfair Display", serif;
+        font-size: 22px;
+        font-weight: 500;
+      }
+
+      .letter-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 70%;
+        margin: 10px auto 15px;
+      }
+
+      .letter-divider span {
+        flex: 1;
+        height: 1px;
+        background: rgba(176, 138, 84, 0.35);
+      }
+
+      .letter-divider i {
+        color: #ae8752;
+        font-style: normal;
+        font-size: 9px;
+      }
+
+      .letter-text {
+        color: #4c3d3f;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .letter-text p {
+        margin-bottom: 8px;
+      }
+
+      .letter-text .opening {
+        color: #642432;
+        font-family: "Playfair Display", serif;
+        font-size: 15px;
+      }
+
+      .signature {
+        margin-top: auto;
+        text-align: right;
+      }
+
+      .signature-small {
+        display: block;
+        color: #806f70;
+        font-size: 8px;
+      }
+
+      .signature-name {
+        color: #652332;
+        font-family: "Playfair Display", serif;
+        font-size: 18px;
+        font-style: italic;
+      }
+
+      .hint {
+        position: absolute;
+        left: 50%;
+        bottom: 8vh;
+        transform: translateX(-50%);
+        text-align: center;
+        color: #77686a;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        z-index: 4;
+      }
+
+      .hint-arrow {
+        display: block;
+        margin-top: 9px;
+        color: #7b3442;
+        animation: breathe 2s ease-in-out infinite;
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 0.35;
+          transform: translateY(0);
+        }
+        50% {
+          opacity: 1;
+          transform: translateY(3px);
+        }
+      }
+
+      /* FULL SCREEN LETTER */
+      .full-letter {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background:
+          radial-gradient(
+            circle at 50% 25%,
+            rgba(255, 255, 255, 0.95),
+            transparent 40%
+          ),
+          linear-gradient(135deg, #f5eee5, #fffdf8 48%, #eee2d5);
+        z-index: 80;
+        visibility: hidden;
+        opacity: 0;
+        transform: scale(0.5);
+        transform-origin: center;
+        overflow-y: auto;
+      }
+
+      .full-paper {
+        position: relative;
+        width: min(820px, 88vw);
+        min-height: min(820px, 88vh);
+        margin: 6vh auto;
+        padding: clamp(45px, 7vw, 85px) clamp(30px, 8vw, 100px);
+        background: linear-gradient(135deg, #fffdf8, #f9f1e7);
+        border: 1px solid rgba(173, 135, 87, 0.3);
+        box-shadow: 0 35px 100px rgba(70, 42, 43, 0.16);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .full-paper::before {
+        content: "";
+        position: absolute;
+        inset: 18px;
+        border: 1px solid rgba(174, 135, 85, 0.35);
+        pointer-events: none;
+      }
+
+      .full-paper::after {
+        content: "";
+        position: absolute;
+        inset: 25px;
+        border: 1px solid rgba(174, 135, 85, 0.12);
+        pointer-events: none;
+      }
+
+      .full-label {
+        text-align: center;
+        color: #b08a57;
+        font-size: 9px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+
+      .full-title {
+        text-align: center;
+        color: #5d1f2b;
+        font-family: "Playfair Display", serif;
+        font-size: clamp(34px, 5vw, 58px);
+        font-weight: 500;
+        margin-bottom: 22px;
+      }
+
+      .full-divider {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: min(320px, 70%);
+        margin: 0 auto 40px;
+      }
+
+      .full-divider span {
+        flex: 1;
+        height: 1px;
+        background: rgba(176, 138, 84, 0.35);
+      }
+
+      .full-divider i {
+        color: #ae8752;
+        font-style: normal;
+      }
+
+      .full-text {
+        max-width: 620px;
+        margin: 0 auto;
+        color: #4b3d3f;
+        font-size: 15px;
+        line-height: 2;
+        text-align: left;
+      }
+
+      .full-text p {
+        margin-bottom: 20px;
+      }
+
+      .full-text .opening {
+        color: #632532;
+        font-family: "Playfair Display", serif;
+        font-size: 25px;
+      }
+
+      .full-signature {
+        margin-top: 30px;
+        text-align: right;
+        color: #652332;
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        font-style: italic;
+      }
+
+      .particle {
+        position: fixed;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #b89562;
+        pointer-events: none;
+        z-index: 95;
+      }
+
+      @media (max-width: 600px) {
+        .intro {
+          top: 8vh;
+        }
+
+        .envelope-stage {
+          width: 86vw;
+        }
+
+        .seal {
+          width: 52px;
+          height: 52px;
+        }
+
+        .seal-icon {
+          width: 19px;
+          height: 19px;
+        }
+
+        .letter-content {
+          padding: 20px 18px;
+        }
+
+        .letter-title {
+          font-size: 18px;
+        }
+
+        .letter-text {
+          font-size: 10px;
+        }
+
+        .full-paper {
+          width: 92vw;
+          min-height: 88vh;
+          margin: 6vh auto;
+          padding: 55px 30px;
+        }
+
+        .full-paper::before {
+          inset: 12px;
+        }
+
+        .full-paper::after {
+          inset: 18px;
+        }
+
+        .full-title {
+          font-size: 34px;
+        }
+
+        .full-text {
+          font-size: 13px;
+          line-height: 1.9;
+        }
+
+        .full-text .opening {
+          font-size: 21px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="grain"></div>
+    <div class="ambient"></div>
+
+    <main class="scene" id="scene">
+      <div class="intro" id="intro">
+        <span class="intro-small"> A little something for you </span>
+        <div class="intro-title">For my favorite person.</div>
+      </div>
+
+      <div class="envelope-stage" id="envelopeStage">
+        <div class="envelope-shadow" id="shadow"></div>
+
+        <div class="envelope" id="envelope" onclick="openEnvelope()">
+          <div class="envelope-back"></div>
+          <div class="letter" id="letter">
+            <div class="letter-content">
+              <div class="letter-label">A letter for you</div>
+              <h2 class="letter-title">"25"</h2>
+              <div class="letter-divider">
+                <span></span>
+                <i>✦</i>
+                <span></span>
+              </div>
+              <div class="letter-text">
+                <!-- <p class="opening">Happy 25th.</p> -->
+                <p>Selamat ulang tahun, Sayang.</p>
+                <p>
+                  Di usiamu yang ke-25 ini, aku cuma ingin kamu menjalani hidup
+                  dengan tenang dan menikmati setiap proses yang sedang kamu
+                  jalani.
+                </p>
+              </div>
+              <div class="signature">
+                <span class="signature-small">❤️</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIPATAN AMPLOP -->
+          <div class="envelope-left"></div>
+          <div class="envelope-right"></div>
+          <div class="envelope-bottom"></div>
+
+          <!-- FLAP PENUTUP (DEPAN DAN BELAKANG) & WAX SEAL -->
+          <div class="flap" id="flap"></div>
+          <div class="flap-back" id="flapBack"></div>
+          <div class="seal" id="seal">
+            <svg class="seal-icon" viewBox="0 0 24 24">
+              <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- HINT -->
+      <div class="hint" id="hint">
+        A letter is waiting for you.
+        <span class="hint-arrow">tap the envelope</span>
+      </div>
+    </main>
+
+    <!-- FULL SCREEN LETTER -->
+    <section class="full-letter" id="fullLetter">
+      <div class="full-paper">
+        <div class="full-label">A letter for you</div>
+        <h1 class="full-title">"25"</h1>
+
+        <div class="full-divider">
+          <span></span>
+          <i>✦</i>
+          <span></span>
+        </div>
+
+        <!-- <div class="full-text">
+          <p class="opening">Happy 25th.</p>
+          <p>Selamat ulang tahun, Sayang.</p>
+          <p>
+            Di umurmu yang ke-25 ini, aku nggak ingin cuma mau bilang semoga
+            kamu panjang umur dan selalu bahagia.
+          </p>
+          <p>
+            Aku tahu hidup nggak selalu tentang hari-hari yang sempurna. Akan
+            ada hari yang mudah, ada juga hari yang mungkin terasa berat.
+          </p>
+          <p>
+            Jadi aku berharap kamu selalu punya keberanian untuk mengejar apa
+            yang kamu inginkan, ketenangan untuk menerima apa yang belum bisa
+            kamu ubah, dan orang-orang yang membuat kamu merasa nyaman menjadi
+            dirimu sendiri.
+          </p>
+          <p>
+            Makasi udah jadi bagian dari hidupku. semua cerita, tawa, obrolan
+            obrolan kecil, dan waktu yang udah kamu luangin untuk aku.
+          </p>
+          <p>
+            Semoga di usia 25 ini kamu semakin dekat dengan kehidupan yang kamu
+            inginkan.
+          </p>
+          <p>
+            Dan kalau suatu hari semuanya terasa sedikit terlalu berat, semoga
+            kamu ingat satu hal:
+          </p>
+          <p><strong>kamu nggak harus melewati semuanya sendirian.</strong></p>
+          <p>
+            Aku selalu senang dengar cerita kamu, bahkan cerita yang sama untuk
+            kesekian kalinya.
+          </p>
+          <div class="full-signature">
+            With love,<br />
+            Sayang ❤️
+          </div>
+        </div> -->
+        <div class="full-text">
+          <!-- <p class="opening">Happy 25th.</p> -->
+          <p>Selamat ulang tahun, Sayang.</p>
+          <p>
+            Di usiamu yang ke-25 ini, aku cuma ingin kamu menjalani hidup dengan
+            tenang dan menikmati setiap proses yang sedang kamu jalani.
+          </p>
+          <p>
+            Ada hari-hari yang menyenangkan dan mungkin ada juga hari yang
+            terasa berat. Apa pun itu, semoga kamu selalu punya cukup alasan
+            untuk tetap melangkah dan menikmati apa yang sedang kamu jalani.
+          </p>
+          <p>
+            Aku harap kamu bisa terus mengejar hal-hal yang kamu inginkan, tanpa
+            terlalu terburu-buru. Semoga kamu dikelilingi orang-orang yang baik,
+            yang bisa membuat kamu merasa nyaman menjadi diri sendiri.
+          </p>
+          <p>
+            Semoga di usia 25 ini, satu per satu hal yang kamu inginkan bisa
+            kamu capai, dan semoga kamu tetap bisa menikmati setiap perjalanan
+            itu.
+          </p>
+          <!-- <div class="full-signature">❤️<br /></div> -->
+        </div>
+      </div>
+    </section>
+
+    <script>
+      let opened = false;
+
+      function openEnvelope() {
+        if (opened) return;
+        opened = true;
+
+        const tl = gsap.timeline({
+          defaults: {
+            ease: "power3.inOut",
+          },
+        });
+
+        /* 1. Hilangkan hint dan intro bersamaan */
+        tl.to(["#hint", "#intro"], {
+          opacity: 0,
+          y: -12,
+          duration: 0.45,
+        });
+
+        /* 2. Amplop sedikit terangkat */
+        tl.to(
+          "#envelopeStage",
+          {
+            y: -8,
+            duration: 0.5,
+            ease: "power2.out",
+          },
+          "-=0.2",
+        );
+
+        /* 3. Seal melepas secara lembut */
+        tl.to("#seal", {
+          scale: 0.2,
+          opacity: 0,
+          duration: 0.45,
+          ease: "power2.in",
+        });
+
+        /* 4. Flap terbuka (depan dan belakang berputar bersama) */
+        tl.to(["#flap", "#flapBack"], {
+          rotateX: 180,
+          duration: 1.15,
+          ease: "power3.inOut",
+        });
+
+        /* 5. Pindahkan z-index flap ke belakang kertas setelah terbuka */
+        tl.set(["#flap", "#flapBack"], {
+          zIndex: 1,
+        });
+
+        /* 6. Kertas terangkat sedikit */
+        tl.to(
+          "#letter",
+          {
+            y: -18,
+            rotation: -0.4,
+            duration: 0.35,
+            ease: "power2.out",
+          },
+          "-=0.05",
+        );
+
+        /* 7. Tarik kertas keluar */
+        tl.to("#letter", {
+          y: "-72%",
+          rotation: 0,
+          duration: 1.35,
+          ease: "power2.out",
+        });
+
+        /* 8. Overshoot animasi kertas */
+        tl.to("#letter", {
+          y: "-78%",
+          duration: 0.35,
+          ease: "power2.out",
+        });
+
+        tl.to("#letter", {
+          y: "-75%",
+          duration: 0.45,
+          ease: "power2.inOut",
+        });
+
+        /* 9. Partikel setelah kertas keluar */
+        tl.call(() => {
+          createParticles();
+        });
+
+        tl.to({}, { duration: 0.25 });
+
+        /* 10. Expand ke full letter */
+        tl.call(() => {
+          expandLetter();
+        });
+      }
+
+      function expandLetter() {
+        const letter = document.getElementById("letter");
+        const fullLetter = document.getElementById("fullLetter");
+        const rect = letter.getBoundingClientRect();
+
+        gsap.set(fullLetter, {
+          visibility: "visible",
+          opacity: 1,
+          scale: 0.2,
+          x: rect.left + rect.width / 2 - window.innerWidth / 2,
+          y: rect.top + rect.height / 2 - window.innerHeight / 2,
+          transformOrigin: "center center",
+        });
+
+        const tl = gsap.timeline();
+
+        tl.to("#envelopeStage", {
+          opacity: 0,
+          scale: 0.92,
+          duration: 0.6,
+          ease: "power2.in",
+        });
+
+        tl.to(
+          fullLetter,
+          {
+            x: 0,
+            y: 0,
+            scale: 1,
+            duration: 1.2,
+            ease: "power4.out",
+          },
+          "-=.35",
+        );
+
+        tl.from(
+          ".full-paper",
+          {
+            y: 35,
+            opacity: 0,
+            duration: 0.8,
+            ease: "power3.out",
+          },
+          "-=.75",
+        );
+
+        tl.from(
+          ".full-label, .full-title, .full-divider, .full-text",
+          {
+            opacity: 0,
+            y: 18,
+            duration: 0.7,
+            stagger: 0.07,
+            ease: "power3.out",
+          },
+          "-=.45",
+        );
+      }
+
+      function createParticles() {
+        const stage = document.getElementById("envelopeStage");
+        const rect = stage.getBoundingClientRect();
+
+        for (let i = 0; i < 25; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left =
+            rect.left + rect.width / 2 + (Math.random() * 160 - 80) + "px";
+          particle.style.top = rect.top + rect.height * 0.35 + "px";
+          document.body.appendChild(particle);
+
+          gsap.to(particle, {
+            x: Math.random() * 220 - 110,
+            y: -(Math.random() * 170 + 50),
+            opacity: 0,
+            scale: Math.random() * 0.9 + 0.4,
+            duration: Math.random() * 1.4 + 1,
+            delay: Math.random() * 0.3,
+            ease: "power2.out",
+            onComplete() {
+              particle.remove();
+            },
+          });
+        }
+      }
+
+      /* Animasi float idle */
+      gsap.to("#envelope", {
+        y: -6,
+        duration: 2.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+
+      /* Ambient light movement */
+      gsap.to(".ambient", {
+        x: 25,
+        y: -18,
+        duration: 8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+    </script>
+  </body>
+</html>
